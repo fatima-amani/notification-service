@@ -13,67 +13,73 @@ import java.util.Map;
 public class NotificationService {
 
     private final EmailService emailService;
-    private final UserService userService; // To get user emails
-    private final MetroService metroService; // To get station manager emails
+    private final UserService userService;
+    private final MetroService metroService;
 
     @KafkaListener(topics = "ticket_payment_success", groupId = "notification-group")
     public void handlePaymentSuccess(String eventData) {
-        // Convert eventData (JSON String) to Map
+        System.out.println("Received ticket_payment_success event: " + eventData);
+
         Map<String, Object> event = parseJson(eventData);
-        Long userId = Long.valueOf(event.get("userId").toString());
-        Double amount = Double.valueOf(event.get("amount").toString());
-        String source = event.get("source").toString();
-        String destination = event.get("destination").toString();
+        if (event == null) return;
 
-        // Fetch user email
-        String userEmail = userService.getUserEmail(userId);
+        // Use the correct keys from the received JSON message
+        String userId = event.get("userId").toString();
+        String source = metroService.getStationName(Long.parseLong(event.get("src").toString()));
+        String destination = metroService.getStationName(Long.parseLong(event.get("dest").toString()));
+        String amount = event.get("amount").toString();
 
-        // Send payment success email
+        String userEmail = userService.getUserEmail(Long.valueOf(userId));
+
         String subject = "Metro Ticket Purchase Confirmation";
-        String body = String.format("Dear User, <br> Your ticket from %s to %s was purchased successfully. <br> Amount: ₹%.2f", source, destination, amount);
+        String body = "Dear User, <br> Your ticket from " + source + " to " + destination +
+                " was purchased successfully. <br> Amount: ₹" + amount;
 
         emailService.sendEmail(userEmail, subject, body);
     }
 
+
     @KafkaListener(topics = "penalty_charged", groupId = "notification-group")
     public void handlePenaltyCharged(String eventData) {
+        System.out.println("Received penalty_charged event: " + eventData);
+
         Map<String, Object> event = parseJson(eventData);
-        Long userId = Long.valueOf(event.get("userId").toString());
-        Double penaltyAmount = Double.valueOf(event.get("penaltyAmount").toString());
+        if (event == null) return;
 
-        // Fetch user email
-        String userEmail = userService.getUserEmail(userId);
+        String userId = event.get("userId").toString();
+        String penaltyAmount = event.get("penaltyAmount").toString();
 
-        // Send penalty email
+        String userEmail = userService.getUserEmail(Long.valueOf(userId));
+
         String subject = "Penalty Charged - Metro Service";
-        String body = String.format("Dear User, <br> A penalty of ₹%.2f has been charged due to travel time exceeding limits.", penaltyAmount);
+        String body = "Dear User, <br> A penalty of ₹" + Float.parseFloat(penaltyAmount) + " has been charged to your account for exceeding a 90 minute limit.";
 
         emailService.sendEmail(userEmail, subject, body);
     }
 
     @KafkaListener(topics = "sos_alert", groupId = "notification-group")
     public void handleSOSAlert(String eventData) {
+        System.out.println("Received SOS alert event: " + eventData);
+
         Map<String, Object> event = parseJson(eventData);
-        Long userId = Long.valueOf(event.get("userId").toString());
-        Long stationId = Long.valueOf(event.get("stationId").toString());
+        if (event == null) return;
 
-        // Fetch station manager email
-        String managerEmail = metroService.getStationManagerEmail(stationId);
+        String stationId = event.get("stationId").toString();
+        String managerEmail = metroService.getStationManagerEmail(Long.valueOf(stationId));
 
-        // Send SOS alert email
         String subject = "URGENT: SOS Alert at Your Station";
         String body = "An emergency SOS alert has been triggered by a passenger. Please respond immediately.";
 
         emailService.sendEmail(managerEmail, subject, body);
     }
 
-    // Convert JSON string to Map
     private Map<String, Object> parseJson(String json) {
         try {
             return new ObjectMapper().readValue(json, new TypeReference<>() {});
         } catch (Exception e) {
-            throw new RuntimeException("Error parsing JSON", e);
+            System.err.println("Error parsing JSON: " + json);
+            e.printStackTrace();
+            return null;
         }
     }
 }
-
