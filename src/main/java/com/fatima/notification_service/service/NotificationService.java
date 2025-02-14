@@ -3,6 +3,7 @@ package com.fatima.notification_service.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
@@ -10,6 +11,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class NotificationService {
 
     private final EmailService emailService;
@@ -18,7 +20,8 @@ public class NotificationService {
 
     @KafkaListener(topics = "ticket_payment_success", groupId = "notification-group")
     public void handlePaymentSuccess(String eventData) {
-        System.out.println("Received ticket_payment_success event: " + eventData);
+        log.info("Payment Success Mail sent");
+//        System.out.println("Received ticket_payment_success event: " + eventData);
 
         Map<String, Object> event = parseJson(eventData);
         if (event == null) return;
@@ -41,7 +44,8 @@ public class NotificationService {
 
     @KafkaListener(topics = "penalty_charged", groupId = "notification-group")
     public void handlePenaltyCharged(String eventData) {
-        System.out.println("Received penalty_charged event: " + eventData);
+        log.info("Penalty Mail sent");
+//        System.out.println("Received penalty_charged event: " + eventData);
 
         Map<String, Object> event = parseJson(eventData);
         if (event == null) return;
@@ -59,7 +63,8 @@ public class NotificationService {
 
     @KafkaListener(topics = "sos_alert", groupId = "notification-group")
     public void handleSOSAlert(String eventData) {
-        System.out.println("Received SOS alert event: " + eventData);
+        log.info("Received SOS alert");
+//        System.out.println("Received SOS alert event: " + eventData);
 
         Map<String, Object> event = parseJson(eventData);
         if (event == null) return;
