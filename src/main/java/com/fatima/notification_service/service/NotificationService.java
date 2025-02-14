@@ -32,7 +32,7 @@ public class NotificationService {
         String destination = metroService.getStationName(Long.parseLong(event.get("dest").toString()));
         String amount = event.get("amount").toString();
 
-        String userEmail = userService.getUserEmail(Long.valueOf(userId));
+        String userEmail = userService.getUserEmail(Long.parseLong(userId));
 
         String subject = "Metro Ticket Purchase Confirmation";
         String body = "Dear User, <br> Your ticket from " + source + " to " + destination +
@@ -53,7 +53,7 @@ public class NotificationService {
         String userId = event.get("userId").toString();
         String penaltyAmount = event.get("penaltyAmount").toString();
 
-        String userEmail = userService.getUserEmail(Long.valueOf(userId));
+        String userEmail = userService.getUserEmail(Long.parseLong(userId));
 
         String subject = "Penalty Charged - Metro Service";
         String body = "Dear User, <br> A penalty of ₹" + Float.parseFloat(penaltyAmount) + " has been charged to your account for exceeding a 90 minute limit.";
@@ -70,7 +70,7 @@ public class NotificationService {
         if (event == null) return;
 
         String stationId = event.get("stationId").toString();
-        String managerEmail = metroService.getStationManagerEmail(Long.valueOf(stationId));
+        String managerEmail = metroService.getStationManagerEmail(Long.parseLong(stationId));
 
         String subject = "URGENT: SOS Alert at Your Station";
         String body = "An emergency SOS alert has been triggered by a passenger. Please respond immediately.";
